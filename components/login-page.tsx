@@ -1,18 +1,20 @@
 "use client"
 
 import { useState } from "react"
-import { Newspaper, Eye, EyeOff, Loader2 } from "lucide-react"
+import { Newspaper, Eye, EyeOff, Loader2, Shield, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Field, FieldLabel, FieldError, FieldGroup, FieldDescription } from "@/components/ui/field"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface LoginPageProps {
-  onLogin: (email: string, password: string) => void
+  onLogin: (email: string, password: string, isAdmin: boolean) => void
 }
 
 export function LoginPage({ onLogin }: LoginPageProps) {
+  const [loginType, setLoginType] = useState<"user" | "admin">("user")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -57,16 +59,33 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       return
     }
     
-    // Demo credentials check
-    if (email === "demo@newslens.com" && password === "demo123") {
-      onLogin(email, password)
-    } else if (mode === "register") {
-      onLogin(email, password)
+    // Admin login check
+    if (loginType === "admin") {
+      if (email === "admin@newslens.com" && password === "admin123") {
+        onLogin(email, password, true)
+      } else {
+        setErrors({ general: "Invalid admin credentials. Try admin@newslens.com / admin123" })
+      }
     } else {
-      setErrors({ general: "Invalid credentials. Try demo@newslens.com / demo123" })
+      // User login check
+      if (email === "user@newslens.com" && password === "user123") {
+        onLogin(email, password, false)
+      } else if (mode === "register") {
+        onLogin(email, password, false)
+      } else {
+        setErrors({ general: "Invalid credentials. Try user@newslens.com / user123" })
+      }
     }
     
     setIsLoading(false)
+  }
+
+  function handleTabChange(value: string) {
+    setLoginType(value as "user" | "admin")
+    setEmail("")
+    setPassword("")
+    setErrors({})
+    setMode("login")
   }
 
   return (
@@ -87,16 +106,32 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
         <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-xl text-center">
-              {mode === "login" && "Welcome back"}
-              {mode === "register" && "Create an account"}
-              {mode === "forgot" && "Reset password"}
-            </CardTitle>
-            <CardDescription className="text-center">
-              {mode === "login" && "Sign in to access your dashboard"}
-              {mode === "register" && "Enter your details to get started"}
-              {mode === "forgot" && "Enter your email to receive a reset link"}
-            </CardDescription>
+            <Tabs value={loginType} onValueChange={handleTabChange} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 bg-muted/50">
+                <TabsTrigger value="user" className="flex items-center gap-2 data-[state=active]:bg-card">
+                  <User className="h-4 w-4" />
+                  User Login
+                </TabsTrigger>
+                <TabsTrigger value="admin" className="flex items-center gap-2 data-[state=active]:bg-card">
+                  <Shield className="h-4 w-4" />
+                  Admin Login
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            
+            <div className="pt-4">
+              <CardTitle className="text-xl text-center">
+                {mode === "login" && (loginType === "admin" ? "Admin Access" : "Welcome back")}
+                {mode === "register" && "Create an account"}
+                {mode === "forgot" && "Reset password"}
+              </CardTitle>
+              <CardDescription className="text-center mt-1">
+                {mode === "login" && loginType === "admin" && "Sign in with admin credentials"}
+                {mode === "login" && loginType === "user" && "Sign in to access your dashboard"}
+                {mode === "register" && "Enter your details to get started"}
+                {mode === "forgot" && "Enter your email to receive a reset link"}
+              </CardDescription>
+            </div>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -106,7 +141,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="you@example.com"
+                    placeholder={loginType === "admin" ? "admin@newslens.com" : "you@example.com"}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     aria-invalid={!!errors.email}
@@ -143,7 +178,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                 )}
               </FieldGroup>
 
-              {mode === "login" && (
+              {mode === "login" && loginType === "user" && (
                 <div className="flex items-center justify-between">
                   <label className="flex items-center gap-2 text-sm cursor-pointer">
                     <Checkbox
@@ -182,7 +217,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                   </>
                 ) : (
                   <>
-                    {mode === "login" && "Sign in"}
+                    {mode === "login" && (loginType === "admin" ? "Sign in as Admin" : "Sign in")}
                     {mode === "register" && "Create account"}
                     {mode === "forgot" && "Send reset link"}
                   </>
@@ -190,50 +225,55 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               </Button>
             </form>
 
-            <div className="mt-6 pt-4 border-t border-border">
-              {mode === "login" && (
-                <p className="text-center text-sm text-muted-foreground">
-                  {"Don't have an account? "}
-                  <button
-                    type="button"
-                    onClick={() => setMode("register")}
-                    className="text-primary hover:underline font-medium"
-                  >
-                    Sign up
-                  </button>
-                </p>
-              )}
-              {mode === "register" && (
-                <p className="text-center text-sm text-muted-foreground">
-                  Already have an account?{" "}
-                  <button
-                    type="button"
-                    onClick={() => setMode("login")}
-                    className="text-primary hover:underline font-medium"
-                  >
-                    Sign in
-                  </button>
-                </p>
-              )}
-              {mode === "forgot" && (
-                <p className="text-center text-sm text-muted-foreground">
-                  Remember your password?{" "}
-                  <button
-                    type="button"
-                    onClick={() => setMode("login")}
-                    className="text-primary hover:underline font-medium"
-                  >
-                    Sign in
-                  </button>
-                </p>
-              )}
-            </div>
+            {loginType === "user" && (
+              <div className="mt-6 pt-4 border-t border-border">
+                {mode === "login" && (
+                  <p className="text-center text-sm text-muted-foreground">
+                    {"Don't have an account? "}
+                    <button
+                      type="button"
+                      onClick={() => setMode("register")}
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Sign up
+                    </button>
+                  </p>
+                )}
+                {mode === "register" && (
+                  <p className="text-center text-sm text-muted-foreground">
+                    Already have an account?{" "}
+                    <button
+                      type="button"
+                      onClick={() => setMode("login")}
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Sign in
+                    </button>
+                  </p>
+                )}
+                {mode === "forgot" && (
+                  <p className="text-center text-sm text-muted-foreground">
+                    Remember your password?{" "}
+                    <button
+                      type="button"
+                      onClick={() => setMode("login")}
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Sign in
+                    </button>
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Demo credentials hint */}
             {mode === "login" && (
               <div className="mt-4 p-3 rounded-md bg-muted/50 border border-border/50">
                 <FieldDescription className="text-center">
-                  Demo: demo@newslens.com / demo123
+                  {loginType === "admin" 
+                    ? "Demo: admin@newslens.com / admin123"
+                    : "Demo: user@newslens.com / user123"
+                  }
                 </FieldDescription>
               </div>
             )}

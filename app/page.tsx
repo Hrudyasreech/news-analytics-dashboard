@@ -47,8 +47,7 @@ export default function DashboardPage() {
   const [dataLoaded, setDataLoaded] = useState(true)
   const [articles, setArticles] = useState<Article[]>(generateMockArticles())
 
-  function handleLogin(email: string) {
-    const isAdmin = email === "demo@newslens.com" || email.includes("admin")
+  function handleLogin(email: string, _password: string, isAdmin: boolean) {
     setUser({
       email,
       name: email.split("@")[0],
