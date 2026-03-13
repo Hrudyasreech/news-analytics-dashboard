@@ -50,31 +50,40 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     setIsLoading(true)
     setErrors({})
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
     if (mode === "forgot") {
+      await new Promise(resolve => setTimeout(resolve, 1500))
       setErrors({ general: "Password reset link sent to your email" })
       setIsLoading(false)
       return
     }
     
-    // Admin login check
-    if (loginType === "admin") {
-      if (email === "admin@newslens.com" && password === "admin123") {
-        onLogin(email, password, true)
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          password,
+          loginType,
+        }),
+      })
+      
+      const data = await response.json()
+      
+      if (data.success && data.user) {
+        onLogin(data.user.email, password, data.user.isAdmin)
       } else {
-        setErrors({ general: "Invalid admin credentials. Try admin@newslens.com / admin123" })
+        if (loginType === "admin") {
+          setErrors({ general: "Invalid admin credentials. Try admin@newslens.com / admin123" })
+        } else if (mode === "register") {
+          // For demo, allow registration to succeed
+          onLogin(email, password, false)
+        } else {
+          setErrors({ general: "Invalid credentials. Try user@newslens.com / user123" })
+        }
       }
-    } else {
-      // User login check
-      if (email === "user@newslens.com" && password === "user123") {
-        onLogin(email, password, false)
-      } else if (mode === "register") {
-        onLogin(email, password, false)
-      } else {
-        setErrors({ general: "Invalid credentials. Try user@newslens.com / user123" })
-      }
+    } catch {
+      setErrors({ general: "Connection error. Please try again." })
     }
     
     setIsLoading(false)
