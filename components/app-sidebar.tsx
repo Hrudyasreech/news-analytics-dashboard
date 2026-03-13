@@ -8,8 +8,10 @@ import {
   BookMarked,
   Settings,
   Newspaper,
+  LogOut,
+  User,
 } from "lucide-react"
-import type { PageType } from "@/app/page"
+import type { PageType, User as UserType } from "@/app/page"
 import {
   Sidebar,
   SidebarContent,
@@ -26,7 +28,8 @@ import {
 interface AppSidebarProps {
   currentPage: PageType
   onPageChange: (page: PageType) => void
-  isAdmin: boolean
+  user: UserType
+  onLogout: () => void
 }
 
 const navItems = [
@@ -37,7 +40,7 @@ const navItems = [
   { id: "reading-list" as const, label: "Reading List", icon: BookMarked },
 ]
 
-export function AppSidebar({ currentPage, onPageChange, isAdmin }: AppSidebarProps) {
+export function AppSidebar({ currentPage, onPageChange, user, onLogout }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border pb-4">
@@ -72,7 +75,7 @@ export function AppSidebar({ currentPage, onPageChange, isAdmin }: AppSidebarPro
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {isAdmin && (
+        {user.isAdmin && (
           <>
             <SidebarSeparator />
             <SidebarGroup>
@@ -94,6 +97,32 @@ export function AppSidebar({ currentPage, onPageChange, isAdmin }: AppSidebarPro
             </SidebarGroup>
           </>
         )}
+
+        {/* User Profile & Logout */}
+        <SidebarSeparator className="mt-auto" />
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <div className="flex items-center gap-3 px-2 py-2 group-data-[collapsible=icon]:justify-center">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary">
+                    <User className="h-4 w-4" />
+                  </div>
+                  <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+                    <span className="text-sm font-medium text-foreground capitalize">{user.name}</span>
+                    <span className="text-xs text-muted-foreground truncate max-w-[140px]">{user.email}</span>
+                  </div>
+                </div>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton onClick={onLogout} tooltip="Logout">
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
     </Sidebar>
   )

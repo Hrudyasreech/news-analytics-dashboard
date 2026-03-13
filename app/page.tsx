@@ -9,6 +9,7 @@ import { TopicsPage } from "@/components/pages/topics-page"
 import { SentimentPage } from "@/components/pages/sentiment-page"
 import { ReadingListPage } from "@/components/pages/reading-list-page"
 import { AdminPage } from "@/components/pages/admin-page"
+import { LoginPage } from "@/components/login-page"
 import {
   SidebarInset,
   SidebarProvider,
@@ -28,7 +29,14 @@ export interface Article {
   bookmarked: boolean
 }
 
+export interface User {
+  email: string
+  name: string
+  isAdmin: boolean
+}
+
 export default function DashboardPage() {
+  const [user, setUser] = useState<User | null>(null)
   const [currentPage, setCurrentPage] = useState<PageType>("summary")
   const [keywords, setKeywords] = useState<string[]>(["ai", "climate", "economy", "healthcare", "election"])
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
@@ -38,7 +46,20 @@ export default function DashboardPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [dataLoaded, setDataLoaded] = useState(true)
   const [articles, setArticles] = useState<Article[]>(generateMockArticles())
-  const [isAdmin] = useState(true)
+
+  function handleLogin(email: string) {
+    const isAdmin = email === "demo@newslens.com" || email.includes("admin")
+    setUser({
+      email,
+      name: email.split("@")[0],
+      isAdmin,
+    })
+  }
+
+  function handleLogout() {
+    setUser(null)
+    setCurrentPage("summary")
+  }
 
   function handleAnalyze() {
     setIsAnalyzing(true)
@@ -61,12 +82,18 @@ export default function DashboardPage() {
 
   const bookmarkedArticles = articles.filter(a => a.bookmarked)
 
+  // Show login page if not authenticated
+  if (!user) {
+    return <LoginPage onLogin={handleLogin} />
+  }
+
   return (
     <SidebarProvider>
       <AppSidebar
         currentPage={currentPage}
         onPageChange={setCurrentPage}
-        isAdmin={isAdmin}
+        user={user}
+        onLogout={handleLogout}
       />
       <SidebarInset>
         <DashboardHeader
